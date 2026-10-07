@@ -4,11 +4,15 @@ use std::{fs, path::Path};
 
 use anyhow::{Context, Result};
 
-pub const CACHE_SCHEMA_VERSION: u32 = 1;
+pub const CACHE_SCHEMA_VERSION: &str = concat!(
+    env!("CARGO_PKG_VERSION_MAJOR"),
+    ".",
+    env!("CARGO_PKG_VERSION_MINOR"),
+);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CacheStore {
-    pub schema_version: u32,
+    pub schema_version: String,
 
     #[serde(default)]
     pub config_fingerprint: CachedConfigFingerprint,
@@ -19,10 +23,19 @@ pub struct CacheStore {
 impl CacheStore {
     pub fn new(config_fingerprint: CachedConfigFingerprint) -> Self {
         Self {
-            schema_version: CACHE_SCHEMA_VERSION,
+            schema_version: CACHE_SCHEMA_VERSION.to_string(),
             config_fingerprint,
             entries: HashMap::new(),
         }
+    }
+
+    fn invalidate(path: &Path, fingerprint: &CachedConfigFingerprint) -> Result<Self> {
+        if path.exists() {
+            fs::remove_file(path)
+                .with_context(|| format!("failed to remove invalid cache: {}", path.display()))?;
+        }
+
+        Ok(Self::new(fingerprint.clone()))
     }
 
     pub fn load(
@@ -38,15 +51,19 @@ impl CacheStore {
         let content = fs::read_to_string(path)
             .with_context(|| format!("failed to read cache: {}", path.display()))?;
 
-        let store: Self = serde_json::from_str(&content)
-            .with_context(|| format!("failed to parse cache: {}", path.display()))?;
+        let store: Self = match serde_json::from_str(&content) {
+            Ok(store) => store,
+            Err(_) => {
+                return Self::invalidate(path, expected_fingerprint);
+            }
+        };
 
         if store.schema_version != CACHE_SCHEMA_VERSION {
-            return Ok(Self::new(expected_fingerprint.clone()));
+            return Self::invalidate(path, expected_fingerprint);
         }
 
         if &store.config_fingerprint != expected_fingerprint {
-            return Ok(Self::new(expected_fingerprint.clone()));
+            return Self::invalidate(path, expected_fingerprint);
         }
 
         Ok(store)
