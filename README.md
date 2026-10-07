@@ -11,7 +11,7 @@ $ cargo install --locked --features cli cargo-about
 $ cargo about init
 
 # cargo-about-cached をインストール
-$ cargo install --locked --git https://github.com/ferrizuqi/cargo-about-cached
+$ cargo install --locked --git https://github.com/ferrizuqi/cargo-about-cached --tag v0.1.0
 
 # キャッシュ付きでライセンス生成
 $ cargo about-cached about.hbs -o license.html
