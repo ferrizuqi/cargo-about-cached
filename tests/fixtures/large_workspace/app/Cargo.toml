@@ -1,0 +1,10 @@
+[package]
+name = "compat-large-app"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+gpui-kit = "=0.7.3"
+compat-large-member = { path = "../member" }
