@@ -1,0 +1,19 @@
+[overview]
+{{#each overview}}
+{{id}}|{{name}}|{{count}}
+{{/each}}
+
+[crates]
+{{#each crates}}
+{{package.name}}|{{package.version}}|{{license}}
+{{/each}}
+
+[licenses]
+{{#each licenses}}
+--- {{id}}|{{name}} ---
+{{text}}
+[used-by]
+{{#each used_by}}
+{{crate.name}}|{{crate.version}}
+{{/each}}
+{{/each}}

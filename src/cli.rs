@@ -20,21 +20,21 @@ pub struct Cli {
     pub manifest_path: Option<PathBuf>,
 }
 
-pub fn parse_cli() -> Cli {
-    let mut args = std::env::args_os();
+impl Cli {
+    pub fn parse_env() -> Self {
+        let mut args = std::env::args_os();
+        let executable = args
+            .next()
+            .unwrap_or_else(|| OsString::from("cargo-about-cached"));
 
-    let executable = args
-        .next()
-        .unwrap_or_else(|| OsString::from("cargo-about-cached"));
+        let mut args = args.collect::<Vec<_>>();
+        if args
+            .first()
+            .is_some_and(|arg| arg == OsStr::new("about-cached"))
+        {
+            args.remove(0);
+        }
 
-    let mut args = args.collect::<Vec<_>>();
-
-    if args
-        .first()
-        .is_some_and(|arg| arg == OsStr::new("about-cached"))
-    {
-        args.remove(0);
+        Self::parse_from(std::iter::once(executable).chain(args))
     }
-
-    Cli::parse_from(std::iter::once(executable).chain(args))
 }
